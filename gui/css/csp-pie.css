@@ -1,0 +1,11 @@
+#tasty {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
+}
+
+#tasty.active {
+    z-index: 2;
+}
+
