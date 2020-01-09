@@ -1,4 +1,4 @@
-/* global IApi,tasty */
+/* global IApi,CosmoScout,tasty */
 
 /**
  * Pie Menu API
@@ -65,7 +65,7 @@ class PieMenuApi extends IApi {
 
       // Check if checkbox is in a radio group
       // If so don't select
-      if (typeof item.parent !== "undefined" && typeof item.parent.TYPE !== "undefined" && item.parent.TYPE === 'radiogroup') {
+      if (typeof item.parent !== 'undefined' && typeof item.parent.TYPE !== 'undefined' && item.parent.TYPE === 'radiogroup') {
         console.warn('Use "selectRadioGroupItem" to select a checkbox in a RadioGroup instead of directly trying to access it.');
         return;
       }
@@ -123,13 +123,12 @@ class PieMenuApi extends IApi {
   }
 
   _menuEventListener() {
-    this._menu.selection$.subscribe(s => {
+    this._menu.selection$.subscribe((s) => {
       console.log(s);
       if (s.type === 'itemSelection') {
         this._deactivate();
-        if (typeof s.data !== "undefined" && typeof s.data.selected !== "undefined") {
+        if (typeof s.data !== 'undefined' && typeof s.data.selected !== 'undefined') {
           CosmoScout.callNative(s.target.itemId, s.data.selected);
-        } else {
         }
         CosmoScout.callNative('pie_item_selected', s.target.itemId);
       }

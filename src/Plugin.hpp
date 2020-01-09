@@ -28,8 +28,6 @@ class Plugin : public cs::core::PluginBase {
  private:
   Settings mPluginSettings;
   bool     mLoaded = false;
-  bool mPressed = false;
-  bool mActive = false;
 };
 
 } // namespace csp::pie

@@ -7,11 +7,6 @@
 #include "Plugin.hpp"
 
 #include "../../../src/cs-core/GuiManager.hpp"
-#include "../../../src/cs-core/SolarSystem.hpp"
-#include "../../../src/cs-gui/GuiItem.hpp"
-
-#include <VistaKernel/GraphicsManager/VistaTransformNode.h>
-#include <VistaKernelOpenSGExt/VistaOpenSGMaterialTools.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -56,18 +51,20 @@ void Plugin::init() {
       "CosmoScout.pie.initMenu", mPluginSettings.mConfig, "#cosmoscout");
 
   mInputManager->pCurrentKey.onChange().connect([this](int keyCode) {
-      if (abs(keyCode) != 32) {
-          return;
-      }
+    if (abs(keyCode) != 32) {
+      return;
+    }
 
-      bool pressed = keyCode == 32;
+    bool pressed = keyCode == 32;
 
-      mGuiManager->getGui()->callJavascript("CosmoScout.pie.enabled", pressed, mInputManager->mMousePosition.x, mInputManager->mMousePosition.y);
+    mGuiManager->getGui()->callJavascript("CosmoScout.pie.enabled", pressed,
+        mInputManager->mMousePosition.x, mInputManager->mMousePosition.y);
   });
 
-  mGuiManager->getGui()->registerCallback<std::string>("pie_item_selected", [this](std::string target) {
-     std::cout << "[CSP-PIE]::SELECTION " << target << "\n";
-  });
+  mGuiManager->getGui()->registerCallback<std::string>(
+      "pie_item_selected", [this](const std::string& target) {
+        std::cout << "[CSP-PIE]::SELECTION " << target << "\n";
+      });
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -84,6 +81,7 @@ void Plugin::update() {
 
 void Plugin::deInit() {
   mGuiManager->getGui()->callJavascript("CosmoScout.unregisterCss", "css/csp-pie.css");
+  mGuiManager->getGui()->unregisterCallback("pie_item_selected");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
