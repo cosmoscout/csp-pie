@@ -64,6 +64,10 @@ void Plugin::init() {
 
       mGuiManager->getGui()->callJavascript("CosmoScout.pie.enabled", pressed, mInputManager->mMousePosition.x, mInputManager->mMousePosition.y);
   });
+
+  mGuiManager->getGui()->registerCallback<std::string>("pie_item_selected", [this](std::string target) {
+     std::cout << "[CSP-PIE]::SELECTION " << target << "\n";
+  });
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
