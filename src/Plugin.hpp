@@ -10,6 +10,11 @@
 #include "../../../src/cs-core/InputManager.hpp"
 #include "../../../src/cs-core/PluginBase.hpp"
 #include "../../../src/cs-core/Settings.hpp"
+#include "../../../src/cs-gui/WorldSpaceGuiArea.hpp"
+
+class VistaOpenGLNode;
+class VistaViewportResizeToProjectionAdapter;
+class VistaTransformNode;
 
 namespace csp::pie {
 
@@ -17,6 +22,7 @@ namespace csp::pie {
 class Plugin : public cs::core::PluginBase {
  public:
   struct Settings {
+    std::string mDisplay;
     std::string mConfig;
     std::string mStructure;
   };
@@ -26,8 +32,19 @@ class Plugin : public cs::core::PluginBase {
   void update() override;
 
  private:
-  Settings mPluginSettings;
-  bool     mLoaded = false;
+  VistaTransformNode*         mGuiTransform = nullptr;
+  VistaOpenGLNode*            mGuiNode      = nullptr;
+  cs::gui::WorldSpaceGuiArea* mGuiArea      = nullptr;
+  cs::gui::GuiItem*           mGuiItem      = nullptr;
+  Settings                    mPluginSettings;
+  bool                        mLoaded = false;
+
+  /// Creates a WorldSpaceGuiArea and inserts the pie menu
+  void initGuiGlobal();
+
+  /// Inserts the pie menu into the global cosmoscout gui
+  void initGuiLocal();
+  void addGuiCallbacks();
 };
 
 } // namespace csp::pie

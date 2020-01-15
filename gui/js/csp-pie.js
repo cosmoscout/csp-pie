@@ -57,7 +57,7 @@ class PieMenuApi extends IApi {
    * Set a checkbox to selected
    *
    * @param {string} itemId
-   * @param {boolean} selected
+   * @param {boolean|number} selected
    */
   setCheckboxSelected(itemId, selected) {
     if (this._hasItemAndTypeMatches(itemId, 'checkbox')) {
@@ -70,7 +70,7 @@ class PieMenuApi extends IApi {
         return;
       }
 
-      if (selected === true) {
+      if (Boolean(Number(selected)) === true) {
         item.select();
       } else {
         item.deselect();
@@ -128,9 +128,12 @@ class PieMenuApi extends IApi {
       if (s.type === 'itemSelection') {
         this._deactivate();
         if (typeof s.data !== 'undefined' && typeof s.data.selected !== 'undefined') {
-          CosmoScout.callNative(s.target.itemId, s.data.selected);
+          CosmoScout.callNative('pie_item_toggled', s.target.itemId, s.data.selected);
+        } else {
+          CosmoScout.callNative('pie_item_action', s.target.itemId);
         }
-        CosmoScout.callNative('pie_item_selected', s.target.itemId);
+      } if (s.type === 'sliderValueChanging') {
+        CosmoScout.callNative('pie_slider_changed', s.target.itemId, s.data.value);
       }
     });
   }
@@ -166,7 +169,7 @@ class PieMenuApi extends IApi {
    */
   _activate(position) {
     this._menu.canvas.classList.add('active');
-    this._menu.canvas.style['background-color'] = 'rgba(0, 0, 0, 0.5)';
+    this._menu.canvas.style['background-color'] = 'rgba(0, 0, 0, 0.01)';
     this._menu.display(position);
   }
 }
