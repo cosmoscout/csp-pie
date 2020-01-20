@@ -32,12 +32,19 @@ class Plugin : public cs::core::PluginBase {
   void update() override;
 
  private:
+  struct MousePosition {
+    unsigned int x;
+    unsigned int y;
+  };
+
   VistaTransformNode*         mGuiTransform = nullptr;
   VistaOpenGLNode*            mGuiNode      = nullptr;
   cs::gui::WorldSpaceGuiArea* mGuiArea      = nullptr;
   cs::gui::GuiItem*           mGuiItem      = nullptr;
   Settings                    mPluginSettings;
-  bool                        mLoaded = false;
+  bool                        mLoaded           = false;
+  int                         mWorldSpaceWidth  = 1500;
+  int                         mWorldSpaceHeight = 1500;
 
   /// Creates a WorldSpaceGuiArea and inserts the pie menu
   void initGuiGlobal();
@@ -45,6 +52,8 @@ class Plugin : public cs::core::PluginBase {
   /// Inserts the pie menu into the global cosmoscout gui
   void initGuiLocal();
   void addGuiCallbacks();
+
+  MousePosition getMousePosition();
 };
 
 } // namespace csp::pie

@@ -13,7 +13,6 @@
 #include <VistaKernel/DisplayManager/VistaDisplaySystem.h>
 #include <VistaKernel/DisplayManager/VistaViewport.h>
 #include <VistaKernel/DisplayManager/VistaViewportResizeToProjectionAdapter.h>
-
 #include <VistaKernel/DisplayManager/VistaProjection.h>
 #include <VistaKernel/DisplayManager/VistaVirtualPlatform.h>
 #include <VistaKernel/EventManager/VistaEventManager.h>
@@ -79,52 +78,20 @@ void Plugin::init() {
       return;
     }
 
-    VistaVector3D       v3Position;
-    VistaQuaternion     qOrientation;
+    bool pressed = keyCode == 32;
+
     VistaTransformNode* pIntentionNode = dynamic_cast<VistaTransformNode*>(
         GetVistaSystem()->GetGraphicsManager()->GetSceneGraph()->GetNode("SELECTION_NODE"));
 
-    pIntentionNode->GetWorldPosition(v3Position);
-    pIntentionNode->GetWorldOrientation(qOrientation);
-
-    VistaViewport* pViewport(GetVistaSystem()->GetDisplayManager()->GetViewports().begin()->second);
-    auto           pProbs = pViewport->GetProjection()->GetProjectionProperties();
-
-    VistaVector3D v3Origin, v3Up, v3Normal;
-    double        dLeft, dRight, dBottom, dTop;
-
-    pProbs->GetProjPlaneExtents(dLeft, dRight, dBottom, dTop);
-    pProbs->GetProjPlaneMidpoint(v3Origin[0], v3Origin[1], v3Origin[2]);
-    pProbs->GetProjPlaneUp(v3Up[0], v3Up[1], v3Up[2]);
-    pProbs->GetProjPlaneNormal(v3Normal[0], v3Normal[1], v3Normal[2]);
-
-    auto platformTransform =
-        GetVistaSystem()->GetDisplayManager()->GetDisplaySystem()->GetReferenceFrame();
-
-    VistaVector3D start = v3Position;
-    VistaVector3D end   = (v3Position + qOrientation.GetViewDir());
-
-    start = platformTransform->TransformPositionToFrame(start);
-    end   = platformTransform->TransformPositionToFrame(end);
-
-    VistaVector3D direction(end - start);
-
-    VistaRay   ray(start, direction);
-    VistaPlane plane(v3Origin, v3Up.Cross(v3Normal), v3Up, v3Normal);
-
-    VistaVector3D guiIntersection;
-
-    int x = (int)((guiIntersection[0] - dLeft) / (dRight - dLeft) * mGuiItem->getWidth());
-    int y =
-        (int)((1.0 - (guiIntersection[1] - dBottom) / (dTop - dBottom)) * mGuiItem->getHeight());
-
-    int mX;
-    int mY;
-    mGuiItem->calculateMousePosition(x, y, mX, mY);
-
-    bool pressed = keyCode == 32;
-
-    mGuiItem->callJavascript("CosmoScout.pie.enabled", pressed, mX, mY);
+    if (mGuiTransform != nullptr) {
+      mGuiTransform->SetTranslation(pIntentionNode->GetTranslation());
+      mGuiTransform->Translate(0.f, 0.f, -0.8f);
+      mGuiItem->callJavascript(
+          "CosmoScout.pie.enabled", pressed, mWorldSpaceWidth / 2, mWorldSpaceHeight / 2);
+    } else {
+      MousePosition pos = getMousePosition();
+      mGuiItem->callJavascript("CosmoScout.pie.enabled", pressed, pos.x, pos.y);
+    }
   });
 
   mMessageBus->onResponse().connect([this](cs::core::MessageBus::Response const& response) {
@@ -198,14 +165,14 @@ void Plugin::initGuiGlobal() {
                       ->GetPlatformFor(GetVistaSystem()->GetDisplayManager()->GetDisplaySystem())
                       ->GetPlatformNode();
 
-  mGuiArea = new cs::gui::WorldSpaceGuiArea(1500, 1500);
+  mGuiArea = new cs::gui::WorldSpaceGuiArea(mWorldSpaceWidth, mWorldSpaceWidth);
   mGuiArea->setUseLinearDepthBuffer(true);
 
   mGuiItem = new cs::gui::GuiItem("file://../share/resources/gui/csp-pie.html");
 
   mGuiArea->addItem(mGuiItem);
-  mGuiItem->setSizeX(1500);
-  mGuiItem->setSizeY(1500);
+  mGuiItem->setSizeX(mWorldSpaceHeight);
+  mGuiItem->setSizeY(mWorldSpaceWidth);
   mGuiItem->waitForFinishedLoading();
 
   mGuiTransform = pSG->NewTransformNode(platform);
@@ -246,6 +213,52 @@ void Plugin::deInit() {
     delete mGuiItem;
     mInputManager->unregisterSelectable(mGuiNode);
   }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Plugin::MousePosition Plugin::getMousePosition() {
+  VistaVector3D       v3Position;
+  VistaQuaternion     qOrientation;
+  VistaTransformNode* pIntentionNode = dynamic_cast<VistaTransformNode*>(
+      GetVistaSystem()->GetGraphicsManager()->GetSceneGraph()->GetNode("SELECTION_NODE"));
+
+  pIntentionNode->GetWorldPosition(v3Position);
+  pIntentionNode->GetWorldOrientation(qOrientation);
+
+  VistaViewport* pViewport(GetVistaSystem()->GetDisplayManager()->GetViewports().begin()->second);
+  auto           pProbs = pViewport->GetProjection()->GetProjectionProperties();
+
+  VistaVector3D v3Origin, v3Up, v3Normal;
+  double        dLeft, dRight, dBottom, dTop;
+
+  pProbs->GetProjPlaneExtents(dLeft, dRight, dBottom, dTop);
+  pProbs->GetProjPlaneMidpoint(v3Origin[0], v3Origin[1], v3Origin[2]);
+  pProbs->GetProjPlaneUp(v3Up[0], v3Up[1], v3Up[2]);
+  pProbs->GetProjPlaneNormal(v3Normal[0], v3Normal[1], v3Normal[2]);
+
+  auto platformTransform =
+      GetVistaSystem()->GetDisplayManager()->GetDisplaySystem()->GetReferenceFrame();
+
+  VistaVector3D start = v3Position;
+  VistaVector3D end   = (v3Position + qOrientation.GetViewDir());
+
+  start = platformTransform->TransformPositionToFrame(start);
+  end   = platformTransform->TransformPositionToFrame(end);
+
+  VistaVector3D direction(end - start);
+
+  VistaRay   ray(start, direction);
+  VistaPlane plane(v3Origin, v3Up.Cross(v3Normal), v3Up, v3Normal);
+
+  VistaVector3D guiIntersection;
+
+  plane.CalcIntersection(ray, guiIntersection);
+
+  int x = (int)((guiIntersection[0] - dLeft) / (dRight - dLeft) * mGuiItem->getWidth());
+  int y = (int)((1.0 - (guiIntersection[1] - dBottom) / (dTop - dBottom)) * mGuiItem->getHeight());
+
+  return {static_cast<unsigned int>(x), static_cast<unsigned int>(y)};
 }
 
 } // namespace csp::pie
